@@ -39,12 +39,18 @@ int main(int argc, char *argv[])
     n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
     recvBuff[n] = 0;
     per_time = atoi(recvBuff);
-    printf("per_time : %d\n",per_time);
+    printf("per_time : %d \n",per_time);
+
+    send(sockfd, "ok", sizeof("ok")-1, 0);
 
     n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
     recvBuff[n] = 0;
     strcpy(initial_hash, recvBuff);    
-    printf("initial_hash : %s\n", initial_hash);
+    printf("initial_hash : %s \n", initial_hash);
+    
+    send(sockfd, "READY", sizeof("READY"),0);
+    printf("I'M READY\n");
+    
     /* Main loop */
 
     while(1)
@@ -54,7 +60,7 @@ int main(int argc, char *argv[])
         recvBuff[n] = 0;
         strcpy(string, recvBuff);
 
-        printf("starting string : %s\n\n\n\n",string);
+        printf("starting string : %s \n\n\n\n",string);
 
         int i;
         for(i=0; i<per_time; i++)
@@ -66,6 +72,8 @@ int main(int argc, char *argv[])
             printf("string %s final_hash %s\n", string, final_hash);
             if(strcmp(initial_hash, final_hash) == 0)
             {
+                send(sockfd, "FOUND", sizeof("FOUND")-1,0);
+                n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
                 printf("Gg\n");
                 found = 1;
                 break;
@@ -74,8 +82,12 @@ int main(int argc, char *argv[])
             next_string(string, strlen(string)-1);        
         }
 
+
         if(found != 0)
             break;
+
+        send(sockfd, "NOTFOUND", sizeof("NOTFOUND"),0);
+        printf("not found re-trying");
     }
 
 
