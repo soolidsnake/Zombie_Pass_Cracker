@@ -6,6 +6,9 @@ import time
 from threading import Thread
 
 clients_info=[]
+# combi_and_client : It is a dictionary that each key is a client, and each element is a combination. This dictionary
+# will contain all the clients that are already working on a combination. """
+combi_and_client = {}
 
 #Accepts a client connection
 def accept_connection(main_connection, per_time, initial_hash):
@@ -24,8 +27,21 @@ def accept_connection(main_connection, per_time, initial_hash):
 			continue
 
 
-def combi_manager(combi_list, client): #stopped here
-	return "aaa"
+def combi_manager(combi_list, client): 
+	"""Gives the client the right combination."""
+	global combi_and_client
+
+	# If the client already exist in the 'combi_and_client' dictionary (doc of the variable in the beginning of the
+	# script), we associate him to another combination. Then that combination is romeved from the list and returned.
+	if client in combi_and_client.values():
+		del combi_and_client[client]
+		combi_and_client[client] = "".join(combi_list[0])
+		del combi_list[0]
+		return combi_and_client[client]
+	else:
+		combi_and_client[client] = "".join(combi_list[0])
+		del combi_list[0]
+		return combi_and_client[client]
 
 
 def combi_partitioner(combi_list, string_length, per_time): 
@@ -91,6 +107,7 @@ def main():
 	accept_connec_th.start()
 
 	#Main Loop
+	print(combi_list)
 	print("before loop")
 	while(1):
 		try:
