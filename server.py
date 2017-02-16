@@ -33,7 +33,6 @@ def combi_partitioner(combi_list, string_length, per_time):
 	#per_time = 2 , string_length = 3
 	#combi_list = ["aaa", "aac", "aae", ...]
 
-	combi_list = []
 	string = ['a'] * string_length
 
 	combi_list.append(string)
@@ -46,7 +45,7 @@ def combi_partitioner(combi_list, string_length, per_time):
 			if (error == -1):
 				return(-1)
 			i += 1
-		combi_list.append(string)
+		combi_list.append(list(string))
 		print(string)
 
 
@@ -84,7 +83,7 @@ def main():
 
 	per_time = input("Enter per_time number ")
 	initial_hash = input("Enter initial hash ")
-	string_length = 2
+	string_length = 3
 
 	combi_partitioner(combi_list, string_length, int(per_time))
 
