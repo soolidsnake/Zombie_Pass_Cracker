@@ -10,7 +10,7 @@
 #include <arpa/inet.h> 
 
 
-int next_string(char string[], int current_case);
+int next_string_rec(char string[], int current_case);
 int hasher(char final_hash[]);
 
 
@@ -65,8 +65,8 @@ int main(int argc, char *argv[])
         int i;
         for(i=0; i<per_time; i++)
         {
+            //sleep(1);
 
-            
             strcpy(final_hash, string);
             hasher(final_hash);
             printf("string %s final_hash %s\n", string, final_hash);
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            next_string(string, strlen(string)-1);        
+            next_string_rec(string, strlen(string)-1);        
         }
 
 
@@ -87,36 +87,33 @@ int main(int argc, char *argv[])
             break;
 
         send(sockfd, "NOTFOUND", sizeof("NOTFOUND"),0);
-        printf("not found re-trying");
+        printf("not found re-trying with new beginning\n");
+        //sleep(1);
     }
-
-
-
-
-
-
-
-
 
     return (0);
 }
 
 
+int next_string_rec(char string[], int current_case)
+//recursive function to calculate the next string 
+//example: "aaa" => "aab"
 
-int next_string(char string[], int current_case) // recursive
 {
     if((int)string[current_case] >= 122)
     {
         string[current_case] = string[current_case] - 26;
-        next_string(string, current_case-1);
+        next_string_rec(string, current_case-1);
     }
     string[current_case] = ++string[current_case];
+    
     return(0);
 }
 
+
 int hasher(char final_hash[])
 {
-    //CESEAR ENCRYPTION
+    //CEASAR ENCRYPTION
 
     int i = 0;
     for(i=0; i<strlen(final_hash); i++)
@@ -124,20 +121,3 @@ int hasher(char final_hash[])
         final_hash[i]++;
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
