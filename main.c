@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
         int i;
         for(i=0; i<per_time; i++)
         {
-            //sleep(1);
+            sleep(0.2);
 
             strcpy(final_hash, string);
             hasher(final_hash);

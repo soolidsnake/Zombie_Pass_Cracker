@@ -17,6 +17,7 @@ def accept_connection(main_connection, per_time, initial_hash):
 	global clients_info
 	while True:
 		client, address = main_connection.accept()
+		print("A client has just connected")
 		client.settimeout(5)
 		client.send(per_time.encode())
 		client.recv(1024)
@@ -62,7 +63,7 @@ def combi_partitioner(combi_list, string_length, per_time):
 				return(-1)
 			i += 1
 		combi_list.append(list(string))
-		print(string)
+		#print(string)
 
 
 def next_string_rec(string, current_case): 
@@ -97,9 +98,10 @@ def main():
 	#															  #
 	###############################################################
 
-	per_time = input("Enter per_time number ")
-	initial_hash = input("Enter initial hash ")
-	string_length = 3
+	per_time = input("Enter per_time number : ")
+	initial_hash = input("Enter initial_hash : ")
+	string_length = int(input("Enter string_length : "))
+	os.system('clear')
 
 	combi_partitioner(combi_list, string_length, int(per_time))
 
@@ -107,8 +109,8 @@ def main():
 	accept_connec_th.start()
 
 	#Main Loop
-	print(combi_list)
-	print("before loop")
+	#print(combi_list)
+	#print("before loop")
 	while(1):
 		try:
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0)
@@ -129,8 +131,12 @@ def main():
 					readable_sock.send(starting_str.encode())
 				readable.remove(readable_sock)
 		except socket.error:
-			#If an error happens remove the client
-			print("gtfo")
+			#If an error happens remove the client from dictonnary and from clients_info
+
+			combi_list.append(combi_and_client[readable_sock])
+			del combi_and_client[readable_sock]
+
+			print("A client has just disconnected")
 			clients_info.remove(readable_sock)
 
 	#Cleaning all sockets
