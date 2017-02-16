@@ -118,6 +118,9 @@ int hasher(char final_hash[])
     int i = 0;
     for(i=0; i<strlen(final_hash); i++)
     {
+        if((int)final_hash[i] >= 122)
+            final_hash[i] = final_hash[i] - 26;
+        
         final_hash[i]++;
     }
 }

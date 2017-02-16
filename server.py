@@ -3,7 +3,11 @@ import select
 import os
 import sys
 import time
+import tqdm
 from threading import Thread
+
+
+pbar = None
 
 clients_info=[]
 # combi_and_client : It is a dictionary that each key is a client, and each element is a combination. This dictionary
@@ -17,7 +21,7 @@ def accept_connection(main_connection, per_time, initial_hash):
 	global clients_info
 	while True:
 		client, address = main_connection.accept()
-		print("A client has just connected")
+		print("\n\t[*]A client has just connected\n")
 		client.settimeout(5)
 		client.send(per_time.encode())
 		client.recv(1024)
@@ -31,9 +35,13 @@ def accept_connection(main_connection, per_time, initial_hash):
 def combi_manager(combi_list, client): 
 	"""Gives the client the right combination."""
 	global combi_and_client
+	global pbar
 
 	# If the client already exist in the 'combi_and_client' dictionary (doc of the variable in the beginning of the
 	# script), we associate him to another combination. Then that combination is romeved from the list and returned.
+
+	pbar.update()
+
 	if client in combi_and_client.values():
 		del combi_and_client[client]
 		combi_and_client[client] = "".join(combi_list[0])
@@ -52,7 +60,12 @@ def combi_partitioner(combi_list, string_length, per_time):
 
 	string = ['a'] * string_length
 
-	combi_list.append(string)
+	total_combin = 26 ** string_length # WILL CHANGE WHEN WE THE MASK #################################################### IMPORTANT
+
+	combi_list.append(list(string))
+
+
+	pbar = tqdm.tqdm(total = total_combin)
 
 	while(1):
 
@@ -60,11 +73,12 @@ def combi_partitioner(combi_list, string_length, per_time):
 		while(i < per_time):
 			error = next_string_rec(string, string_length -1)
 			if (error == -1):
+				pbar.close()
 				return(-1)
 			i += 1
 		combi_list.append(list(string))
-		#print(string)
-
+		pbar.update(per_time)
+	
 
 def next_string_rec(string, current_case): 
 	#recursive function to calculate the next string 
@@ -83,6 +97,8 @@ def next_string_rec(string, current_case):
 
 
 def main():
+
+	global pbar
 
 	Hash_type = ""
 	Hash = ""
@@ -103,7 +119,12 @@ def main():
 	string_length = int(input("Enter string_length : "))
 	os.system('clear')
 
+	print("\n\n[+] Initialisation of combinations list")
 	combi_partitioner(combi_list, string_length, int(per_time))
+	
+	os.system('clear')
+	print("\n\n[+] Cracking the hash ...\n\n")
+	pbar = tqdm.tqdm(total = len(combi_list))
 
 	accept_connec_th = Thread(target=accept_connection, args=(main_connection, per_time, initial_hash), daemon=True)
 	accept_connec_th.start()
@@ -114,11 +135,7 @@ def main():
 	while(1):
 		try:
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0)
-			#print("inside loop")
-			#print("------------------------------")
-			#for l in clients_info:
-			#	print(l)
-			#print("------------------------------")
+
 			for readable_sock in readable:
 				msg = readable_sock.recv(1024)
 				#print(msg.decode())
@@ -127,6 +144,8 @@ def main():
 					print("Data found\n")
 					sys.exit(0)
 				else:
+					if(len(combi_list) == 0):
+						raise IndexError
 					starting_str = combi_manager(combi_list, readable_sock)
 					readable_sock.send(starting_str.encode())
 				readable.remove(readable_sock)
@@ -136,8 +155,10 @@ def main():
 			combi_list.append(combi_and_client[readable_sock])
 			del combi_and_client[readable_sock]
 
-			print("A client has just disconnected")
+			print("\n\t[*]A client has just disconnected\n")
 			clients_info.remove(readable_sock)
+		except IndexError:
+			break
 
 	#Cleaning all sockets
 	for sock in clients_info:
