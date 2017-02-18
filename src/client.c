@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
     char recvBuff[1024] = {0};
     char string[64] = {0};
     char initial_hash[512] = {0};
+    char string_length[512] = {0};
     char final_hash[512] = {0};
     int per_time = 0;
     struct sockaddr_in serv_addr = {0}; 
@@ -48,6 +49,13 @@ int main(int argc, char *argv[])
     recvBuff[n] = 0;
     strcpy(initial_hash, recvBuff);    
     printf("initial_hash : %s \n", initial_hash);
+
+    send(sockfd, "ok", sizeof("ok")-1, 0);
+
+    n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+    recvBuff[n] = 0;
+    strcpy(string_length, recvBuff);    
+    printf("string_length : %s \n", string_length);
     
     send(sockfd, "READY", sizeof("READY"),0);
     printf("I'M READY\n");
@@ -57,7 +65,7 @@ int main(int argc, char *argv[])
     while(1)
     {
         int found = 0;
-        n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+        n = read(sockfd, recvBuff, atoi(string_length));
         recvBuff[n] = 0;
         strcpy(string, recvBuff);
 
