@@ -42,7 +42,7 @@ def combi_manager(combi_list, client):
 
 	pbar.update()
 
-	if client in combi_and_client():
+	if client in combi_and_client:
 		del combi_and_client[client]
 		combi_and_client[client] = "".join(combi_list[0])
 		del combi_list[0]
@@ -149,7 +149,7 @@ def main():
 				#The goal is to send a combin IF and only if the client doesn't exist in "combi_and_client"
 				#so we do the fellowing :
 
-				if readable_sock in combi_and_client:
+				if not readable_sock in combi_and_client:
 					starting_str = combi_manager(combi_list, readable_sock)
 					readable_sock.send(starting_str.encode())
 
