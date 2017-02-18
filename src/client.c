@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
+    printf("Connected\n");
 
     /***************************************/
     /*            Initiate data             */

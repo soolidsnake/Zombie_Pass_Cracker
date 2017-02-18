@@ -42,7 +42,7 @@ def combi_manager(combi_list, client):
 
 	pbar.update()
 
-	if client in combi_and_client.values():
+	if client in combi_and_client():
 		del combi_and_client[client]
 		combi_and_client[client] = "".join(combi_list[0])
 		del combi_list[0]
@@ -138,7 +138,34 @@ def main():
 
 			for readable_sock in readable:
 				msg = readable_sock.recv(1024)
+
+
+
+
+
+
+
+				#######	Modification here #######
+				#The goal is to send a combin IF and only if the client doesn't exist in "combi_and_client"
+				#so we do the fellowing :
+
+				if readable_sock in combi_and_client:
+					starting_str = combi_manager(combi_list, readable_sock)
+					readable_sock.send(starting_str.encode())
+
+				#The problem is "syncro" when sending the above msg then sending another combin,
+				#the client read them both at same time, zeema tu send "aaa" puis "aab" yjih "aaa"."aab"
+
+
+
+
+
+
+
+
+
 				#print(msg.decode())
+				
 				if(msg.decode() == "FOUND"):
 					readable_sock.send(b"ok")
 					print("Data found\n")
