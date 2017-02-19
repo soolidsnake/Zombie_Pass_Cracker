@@ -3,4 +3,10 @@ CONFIG += console
 CONFIG -= app_bundle
 CONFIG -= qt
 
-SOURCES += client.c
+LIBS += -lmhash
+
+SOURCES += client.c \
+    hashes.c
+
+HEADERS += \
+    hashes.h

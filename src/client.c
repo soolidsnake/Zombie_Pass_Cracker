@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <arpa/inet.h> 
 #include <time.h>
+#include "hashes.h"
 
 int next_string_rec(char string[], int current_case);
 int hasher(char final_hash[]);
