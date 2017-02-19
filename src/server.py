@@ -15,7 +15,7 @@ clients_info=[]
 combi_and_client = {}
 
 #Accepts a client connection
-def accept_connection(main_connection, per_time, initial_hash):
+def accept_connection(main_connection, per_time, initial_hash, string_length):
 	#A thread that accepts clients and send them parameters "per_time" && "initial_hash"
 
 	global clients_info
@@ -26,6 +26,8 @@ def accept_connection(main_connection, per_time, initial_hash):
 		client.send(per_time.encode())
 		client.recv(1024)
 		client.send(initial_hash.encode())
+		client.recv(1024)
+		client.send(string_length.encode())
 		try:
 			clients_info.append(client)
 		except socket.error:
@@ -42,7 +44,7 @@ def combi_manager(combi_list, client):
 
 	pbar.update()
 
-	if client in combi_and_client.values():
+	if client in combi_and_client:
 		del combi_and_client[client]
 		combi_and_client[client] = "".join(combi_list[0])
 		del combi_list[0]
@@ -104,41 +106,48 @@ def main():
 	Hash = ""
 	combi_list = []
 
-	main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	main_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To refuse the socket if it is in time_wait
-	main_connection.bind(("0.0.0.0", 5000))
-	main_connection.listen(10)
 
-
-	###############################################################
-	#															  #
-	###############################################################
 
 	per_time = input("Enter per_time number : ")
 	initial_hash = input("Enter initial_hash : ")
-	string_length = int(input("Enter string_length : "))
+	string_length = input("Enter string_length : ")
 	os.system('clear')
 
 	print("\n\n[+] Initialisation of combinations list")
-	combi_partitioner(combi_list, string_length, int(per_time))
+	combi_partitioner(combi_list, int(string_length), int(per_time))
+
+
+
+	###############################################################
+	main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	main_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To refuse the socket if it is in time_wait
+	main_connection.bind(("0.0.0.0", 12854))
+	main_connection.listen(10)															  #
+	###############################################################
+
+
 	
 	os.system('clear')
 	print("\n\n[+] Cracking the hash ...\n\n")
 	pbar = tqdm.tqdm(total = len(combi_list))
 
-	accept_connec_th = Thread(target=accept_connection, args=(main_connection, per_time, initial_hash), daemon=True)
+	accept_connec_th = Thread(target=accept_connection, args=(main_connection, per_time, initial_hash, string_length), daemon=True)
 	accept_connec_th.start()
 
 	#Main Loop
-	#print(combi_list)
-	#print("before loop")
+	
 	while(1):
 		try:
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0)
 
 			for readable_sock in readable:
 				msg = readable_sock.recv(1024)
-				#print(msg.decode())
+
+				if not readable_sock in combi_and_client:
+					starting_str = combi_manager(combi_list, readable_sock)
+					readable_sock.send(starting_str.encode())
+
+				
 				if(msg.decode() == "FOUND"):
 					readable_sock.send(b"ok")
 					print("Data found\n")
