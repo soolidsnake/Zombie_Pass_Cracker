@@ -121,7 +121,7 @@ def main():
 	###############################################################
 	main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	main_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To refuse the socket if it is in time_wait
-	main_connection.bind(("0.0.0.0", 5000))
+	main_connection.bind(("0.0.0.0", 12854))
 	main_connection.listen(10)															  #
 	###############################################################
 
@@ -135,8 +135,7 @@ def main():
 	accept_connec_th.start()
 
 	#Main Loop
-	#print(combi_list)
-	#print("before loop")
+	
 	while(1):
 		try:
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0)
@@ -144,32 +143,10 @@ def main():
 			for readable_sock in readable:
 				msg = readable_sock.recv(1024)
 
-
-
-
-
-
-
-				#######	Modification here #######
-				#The goal is to send a combin IF and only if the client doesn't exist in "combi_and_client"
-				#so we do the fellowing :
-
 				if not readable_sock in combi_and_client:
 					starting_str = combi_manager(combi_list, readable_sock)
 					readable_sock.send(starting_str.encode())
 
-				#The problem is "syncro" when sending the above msg then sending another combin,
-				#the client read them both at same time, zeema tu send "aaa" puis "aab" yjih "aaa"."aab"
-
-
-
-
-
-
-
-
-
-				#print(msg.decode())
 				
 				if(msg.decode() == "FOUND"):
 					readable_sock.send(b"ok")

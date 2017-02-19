@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h> 
-
+#include <time.h>
 
 int next_string_rec(char string[], int current_case);
 int hasher(char final_hash[]);
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
     serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(5000); 
+    serv_addr.sin_port = htons(12854); 
     serv_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
     connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
@@ -62,23 +62,40 @@ int main(int argc, char *argv[])
     
     /* Main loop */
 
+
+    long            ms; // Milliseconds
+    time_t          s;  // Seconds
+    struct timespec spec;
+
+
     while(1)
     {
+    
+        clock_gettime(CLOCK_REALTIME, &spec);
+
+        ms = spec.tv_nsec; // Convert nanoseconds to milliseconds
+
         int found = 0;
         n = read(sockfd, recvBuff, atoi(string_length));
+        
+        clock_gettime(CLOCK_REALTIME, &spec);
+
+        printf("%f\n",(spec.tv_nsec - ms)/1.0e6);
+
+
         recvBuff[n] = 0;
         strcpy(string, recvBuff);
 
-        printf("starting string : %s \n\n\n\n",string);
+        //printf("starting string : %s \n\n\n\n",string);
 
         int i;
         for(i=0; i<per_time; i++)
         {
-            sleep(0.2);
+            //sleep(0.2);
 
             strcpy(final_hash, string);
             hasher(final_hash);
-            printf("string %s final_hash %s\n", string, final_hash);
+           //printf("string %s final_hash %s\n", string, final_hash);
             if(strcmp(initial_hash, final_hash) == 0)
             {
                 send(sockfd, "FOUND", sizeof("FOUND")-1,0);
@@ -96,7 +113,7 @@ int main(int argc, char *argv[])
             break;
         
         send(sockfd, "NOTFOUND", sizeof("NOTFOUND"),0);
-        printf("not found re-trying with new beginning\n");
+        //printf("not found re-trying with new beginning\n");
         //sleep(1);
     }
 
