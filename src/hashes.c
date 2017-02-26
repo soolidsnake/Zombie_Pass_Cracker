@@ -18,30 +18,38 @@ int main(int argc, char *argv[])
     printf("%d\n", mhash_get_block_size(MHASH_SHA384));
     printf("%d\n", mhash_get_block_size(MHASH_SHA512));
 
+    printf("This is the \"Hello World\" hash in different algorithms\n");
     hash_md5("Hello World", hash);
-    printf("%s\n", hash);
+    printf("md5 : %s\n", hash);
 
     hash_sha1("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha1 : %s\n", hash);
 
     hash_sha224("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha224 : %s\n", hash);
 
     hash_sha256("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha512 : %s\n", hash);
 
     hash_sha384("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha384 : %s\n", hash);
 
     hash_sha512("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha512 : %s\n", hash);
 
     hash_sha1("Hello World", hash);
-    printf("%s\n", hash);
+    printf("sha1 : %s\n", hash);
 
+    unsigned char hash_vector[16];
+    int size = hash_md5_vector("Hello World", hash_vector);
+    printf("md5 vector : ");
+    for(int i = 0; i < size; i++){
+        printf("%d ", hash_vector[i]);
+    }
+    printf("\n");
 
     hash_md5("Hello World", hash);
-    printf("%s\n", hash);
+    printf("md5 : %s\n", hash);
     return 0;
 }
 */
@@ -77,6 +85,25 @@ int hash_md5(const char original_str[], char hash[]) {
     hash[2*i] = '\0';
 
     return 0;
+}
+
+
+int hash_md5_vector(const char original_str[], unsigned char vector_hash[]) {
+    MHASH td;
+
+    td = mhash_init(MHASH_MD5);
+
+    if (td == MHASH_FAILED) {
+        perror("Error : ");
+        return -1;
+    }
+
+    mhash(td, original_str, strlen(original_str));
+
+    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
+    mhash_deinit(td, vector_hash);
+
+    return mhash_get_block_size(MHASH_MD5);
 }
 
 
