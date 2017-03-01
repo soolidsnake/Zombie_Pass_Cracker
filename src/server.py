@@ -123,10 +123,6 @@ def main():
 	Hash = ""
 	combi_list = []
 
-	main_connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-	main_connection.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # To refuse the socket if it is in time_wait
-	main_connection.bind(("0.0.0.0", 12345))
-	main_connection.listen(10)
 
 
 	per_time = input("Enter per_time number : ")

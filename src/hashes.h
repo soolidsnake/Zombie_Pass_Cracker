@@ -18,7 +18,7 @@ int hash_md5(const char original_str[], char hash[]);
  * @param vector_hash[] the minimum size of this array is 16 bytes.
  * @return return the size of the array vector_hash[] or -1 if an error has occured.
  */
-int hash_md5_vector(const char original_str[], unsigned char vector_hash[]);
+int hash_md5_vector(const char original_str[], unsigned char vector_hash[], int string_length);
 
 
 /**
