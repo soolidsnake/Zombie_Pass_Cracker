@@ -9,21 +9,27 @@
 #include <errno.h>
 #include <arpa/inet.h> 
 #include <time.h>
+#include <inttypes.h>// to get 8 bytes from strtoumax(...)
 #include "hashes.h"
 
-int next_string_rec(char string[], int current_case);
-int hasher(char final_hash[]);
+
+int compare_hashes(uint64_t initial_hash[], uint64_t final_hash[], int limit);
 
 
 int main(int argc, char *argv[])
 {
-    int sockfd = 0, n = 0;
+
     char recvBuff[1024] = {0};
     char string[64] = {0};
-    char initial_hash[512] = {0};
-    char final_hash[512] = {0};
+    uint64_t initial_hash[128] = {0};
+    uint64_t final_hash[128] = {0};
+    int sockfd = 0;
+    int n = 0;
     int per_time = 0;
+    int choice = NULL;
     int string_length = 0;
+    int found = 0;
+    int i = 0, j=0;
     struct sockaddr_in serv_addr = {0}; 
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -36,9 +42,15 @@ int main(int argc, char *argv[])
     printf("Connected\n");
 
     /***************************************/
-    /*            Initiate data             */
+    /*            Initiate data            */
     /***************************************/
 
+    n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
+    recvBuff[n] = 0;
+    choice = atoi(recvBuff);
+    printf("choice : %d \n",choice);
+
+    send(sockfd, "ok", sizeof("ok")-1, 0);
     n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
     recvBuff[n] = 0;
     per_time = atoi(recvBuff);
@@ -48,15 +60,36 @@ int main(int argc, char *argv[])
 
     n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
     recvBuff[n] = 0;
-    strcpy(initial_hash, recvBuff);    
-    printf("initial_hash : %s \n", initial_hash);
+    //printf("%s\n\n", recvBuff);
+
+    /*
+        The fellowing parse initial_hash to an array of int64, example :
+        initial_hash = "12345678-abcdef12" =>
+        [0x12345678, 0xabcdef12]
+    */
+    int limit = 0;
+    char *p = NULL;
+    p = recvBuff;
+    p--;
+    do
+    {
+        p++; 
+        initial_hash[limit] = strtoumax(p, &p, 16);
+        printf("%lx\n", initial_hash[limit]);
+        limit++;
+
+    }while(*p != '\0');
+
+    //printf("%d\n",limit);
+
+    /*******/
 
     send(sockfd, "ok", sizeof("ok")-1, 0);
 
     n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
     recvBuff[n] = 0;
     string_length = atoi(recvBuff);
-    printf("string_length : %d \n", string_length);
+    printf("\nstring_length : %d \n", string_length);
     
     send(sockfd, "READY", sizeof("READY"),0);
     printf("I'M READY\n");
@@ -69,7 +102,7 @@ int main(int argc, char *argv[])
     struct timespec spec;
 
 
-    int found = 0;
+
     while(1)
     {
     
@@ -85,41 +118,40 @@ int main(int argc, char *argv[])
 
         //printf("%f\n",(spec.tv_nsec - ms)/1.0e6);
 
+        //printf("starting string : %s \n\n",string);
 
-       
-        //strcpy(string, recvBuff);
 
-        //printf("starting string : %s \n\n\n\n",string);
-
-        int i;
-        int j;
         for(i=0; i<per_time; i++)
         {
-            //sleep(0.2);
+            //printf("starting string : %s \n\n",string);
+            //sleep(1);
 
-            //strcpy(final_hash, string);
-            //hasher(final_hash);
-            //hash_md5_vector(string, final_hash, string_length);
+            switch(choice)//will be changed to a hardcoded jmp address
+            {
+                case 0:
+                    sha512_hash(string, string_length, final_hash);
+                    break;
+                case 1:
+                    md5_hash(string, string_length, final_hash);
+                    break;
+            }
             
-            md5_hash(string, string_length, final_hash);
 
-            //printf("string %s final_hash %s\n", string, final_hash);
-            if(strcmp(initial_hash, final_hash) == 0)
+            if(compare_hashes(initial_hash, final_hash, limit))
             {
                 send(sockfd, "FOUND", sizeof("FOUND")-1,0);
                 n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
-                printf("Gg\n");
+                send(sockfd, string, string_length, 0);//Send password
                 found = 1;
                 break;
             }
 
-            //next_string_rec(string, strlen(string)-1);  
-
-            for(j = string_length; j >= 0; j--)
+            //Next string
+            for(j = string_length - 1; j >= 0; j--)
             {
                 if((int)string[j] >= 122)
                 {
-                    string[j] = string[j] - 26;
+                    string[j] = string[j] - 25;
                     continue;
                 }
 
@@ -127,7 +159,6 @@ int main(int argc, char *argv[])
                 break;
             }      
         }
-
 
         if(found != 0)
             break;
@@ -140,41 +171,14 @@ int main(int argc, char *argv[])
     return (0);
 }
 
-
-int next_string_rec(char string[], int current_case)
-//recursive function to calculate the next string 
-//example: "aaa" => "aab"
-
+int compare_hashes(uint64_t initial_hash[], uint64_t final_hash[], int limit)
 {
-    if((int)string[current_case] >= 122)
+    int k=0;
+    for(k= 0; k < limit; k++)
     {
-        string[current_case] = string[current_case] - 26;
-        next_string_rec(string, current_case-1);
+
+        if(initial_hash[k] != final_hash[k])
+            return 0;
     }
-    string[current_case] = ++string[current_case];
-    
-    return(0);
-}
-
-
-/*int next_string(char string[], int current_case)
-
-{
-    for (i=)
-}*/
-
-
-
-int hasher(char final_hash[])
-{
-    //CEASAR ENCRYPTION
-
-    int i = 0;
-    for(i=0; i<strlen(final_hash); i++)
-    {
-        if((int)final_hash[i] >= 122)
-            final_hash[i] = final_hash[i] - 26;
-        
-        final_hash[i]++;
-    }
+    return 1;  
 }

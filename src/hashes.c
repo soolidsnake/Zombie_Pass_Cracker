@@ -4,107 +4,17 @@
 
 #include "hashes.h"
 
+/* Function prototypes */
+
+void md5_hash(const uint8_t *message, size_t len, uint32_t hash[4]);
+void sha512_hash(const uint8_t *message, size_t len, uint64_t hash[8]);
+
+// Link this program with an external C or x86 compression function
 extern void md5_compress(uint32_t state[4], const uint8_t block[64]);
-
-/* Décommentes pour tester.
-
-int main(int argc, char *argv[])
-{
-    char hash[1024];
-
-    printf("%d\n", mhash_get_block_size(MHASH_SHA1));
-    printf("%d\n", mhash_get_block_size(MHASH_SHA224));
-    printf("%d\n", mhash_get_block_size(MHASH_SHA256));
-    printf("%d\n", mhash_get_block_size(MHASH_SHA384));
-    printf("%d\n", mhash_get_block_size(MHASH_SHA512));
-
-    printf("This is the \"Hello World\" hash in different algorithms\n");
-    hash_md5("Hello World", hash);
-    printf("md5 : %s\n", hash);
-
-    hash_sha1("Hello World", hash);
-    printf("sha1 : %s\n", hash);
-
-    hash_sha224("Hello World", hash);
-    printf("sha224 : %s\n", hash);
-
-    hash_sha256("Hello World", hash);
-    printf("sha512 : %s\n", hash);
-
-    hash_sha384("Hello World", hash);
-    printf("sha384 : %s\n", hash);
-
-    hash_sha512("Hello World", hash);
-    printf("sha512 : %s\n", hash);
-
-    hash_sha1("Hello World", hash);
-    printf("sha1 : %s\n", hash);
-
-    unsigned char hash_vector[16];
-    int size = hash_md5_vector("Hello World", hash_vector);
-    printf("md5 vector : ");
-    for(int i = 0; i < size; i++){
-        printf("%d ", hash_vector[i]);
-    }
-    printf("\n");
-
-    hash_md5("Hello World", hash);
-    printf("md5 : %s\n", hash);
-    return 0;
-}
-*/
-
-
-
+extern void sha512_compress(uint64_t state[8], const uint8_t block[128]);
 
 /* entry point ==================================================================================================================================== */
 
-
-int hash_md5(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[16];
-
-    td = mhash_init(MHASH_MD5);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_MD5); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-
-    hash[2*i] = '\0';
-
-    return 0;
-}
-
-
-int hash_md5_vector(const char original_str[], unsigned char vector_hash[], int string_length) {
-    MHASH td;
-
-    td = mhash_init(MHASH_MD5);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    return mhash_get_block_size(MHASH_MD5);
-}
 
 void md5_hash(const uint8_t *message, size_t len, uint32_t hash[4]) {
     hash[0] = UINT32_C(0x67452301);
@@ -139,136 +49,38 @@ void md5_hash(const uint8_t *message, size_t len, uint32_t hash[4]) {
 }
 
 
-
-
-int hash_sha1(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[20];
-
-    td = mhash_init(MHASH_SHA1);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
+void sha512_hash(const uint8_t *message, size_t len, uint64_t hash[8]) {
+    hash[0] = UINT64_C(0x6A09E667F3BCC908);
+    hash[1] = UINT64_C(0xBB67AE8584CAA73B);
+    hash[2] = UINT64_C(0x3C6EF372FE94F82B);
+    hash[3] = UINT64_C(0xA54FF53A5F1D36F1);
+    hash[4] = UINT64_C(0x510E527FADE682D1);
+    hash[5] = UINT64_C(0x9B05688C2B3E6C1F);
+    hash[6] = UINT64_C(0x1F83D9ABFB41BD6B);
+    hash[7] = UINT64_C(0x5BE0CD19137E2179);
+    
+    #define BLOCK_SIZE 128  // In bytes
+    #define LENGTH_SIZE 16  // In bytes
+    
+    size_t off;
+    for (off = 0; len - off >= BLOCK_SIZE; off += BLOCK_SIZE)
+        sha512_compress(hash, &message[off]);
+    
+    uint8_t block[BLOCK_SIZE] = {0};
+    size_t rem = len - off;
+    memcpy(block, &message[off], rem);
+    
+    block[rem] = 0x80;
+    rem++;
+    if (BLOCK_SIZE - rem < LENGTH_SIZE) {
+        sha512_compress(hash, block);
+        memset(block, 0, sizeof(block));
     }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_SHA1); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-
-    hash[2*i] = '\0';
-
-    return 0;
-}
-
-int hash_sha224(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[28];
-
-    td = mhash_init(MHASH_SHA224);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_SHA224); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-    hash[2*i] = '\0';
-
-    return 0;
-}
-
-int hash_sha256(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[32];
-
-    td = mhash_init(MHASH_SHA256);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_SHA256); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-    hash[2*i] = '\0';
-
-    return 0;
-}
-
-int hash_sha384(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[48];
-
-    td = mhash_init(MHASH_SHA384);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_SHA384); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-    hash[2*i] = '\0';
-
-    return 0;
-}
-
-
-int hash_sha512(const char original_str[], char hash[]) {
-    unsigned int i;
-    MHASH td;
-    unsigned char vector_hash[64];
-
-    td = mhash_init(MHASH_SHA512);
-
-    if (td == MHASH_FAILED) {
-        perror("Error : ");
-        return -1;
-    }
-
-    mhash(td, original_str, strlen(original_str));
-
-    /* Finish the hash and give the result in vector_hash in integer format (Ex : {255, 16 ..}) */
-    mhash_deinit(td, vector_hash);
-
-    /* We convert our hash from integer to string. Ex : {255, 16 ..} -> "ff10.." */
-    for (i = 0; i < mhash_get_block_size(MHASH_SHA512); i++) {
-        sprintf( hash + 2*i, "%.2x", vector_hash[i]);
-    }
-    hash[2*i] = '\0';
-
-    return 0;
+    
+    block[BLOCK_SIZE - 1] = (uint8_t)((len & 0x1FU) << 3);
+    len >>= 5;
+    int i = 1; 
+    for (i = 1; i < LENGTH_SIZE; i++, len >>= 8)
+        block[BLOCK_SIZE - 1 - i] = (uint8_t)(len & 0xFFU);
+    sha512_compress(hash, block);
 }

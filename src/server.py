@@ -14,8 +14,19 @@ clients_info=[]
 # will contain all the clients that are already working on a combination. """
 combi_and_client = {}
 
+
+# Print list of all hashs algorithms
+
+def hash_alg_list():
+
+	print('\n\
+			0 - SHA512\n\
+			1 - MD5\n\
+		 ')
+
+
 #Accepts a client connection
-def accept_connection(main_connection, per_time, initial_hash, string_length):
+def accept_connection(main_connection, choice, per_time, initial_hash, string_length):
 	#A thread that accepts clients and send them parameters "per_time" && "initial_hash"
 
 	global clients_info
@@ -23,6 +34,8 @@ def accept_connection(main_connection, per_time, initial_hash, string_length):
 		client, address = main_connection.accept()
 		print("\n\t[*]A client has just connected\n")
 		client.settimeout(5)
+		client.send(choice.encode())
+		client.recv(1024)
 		client.send(per_time.encode())
 		client.recv(1024)
 		client.send(initial_hash.encode())
@@ -115,20 +128,43 @@ def next_string_rec(string, current_case):
 	return (error)
 
 
-def main():
+def setting_hash_86x64(initial_hash, choice):
+	s = []
+	if choice == 0: #sha512
+		s = '-'.join(initial_hash[i:i+16] for i in range(0, len(initial_hash), 16))
+	elif choice == 1: #md5
+		for i in range(0, len(initial_hash), 16):
+			k = []
+			k = initial_hash[i:i+16]
+			m = []
+			m = [k[i:i+2] for i in range(0, len(k), 2)]
+			m = m[::-1]
+			s.append(''.join([j for j in m]))
+		s = '-'.join([j for j in s])
 
+	return s
+
+
+def main():
+	os.system('clear')
 	global pbar
 
 	Hash_type = ""
 	Hash = ""
 	combi_list = []
 
-
-
-	per_time = input("Enter per_time number : ")
+	hash_alg_list()
+	choice = input("Choose hash algorithm : ")
+	per_time = input("Enter per_time number [default 100 000]: ")
+	if per_time == '':
+		per_time = '100000'
 	initial_hash = input("Enter initial_hash : ")
 	string_length = input("Enter string_length : ")
 	os.system('clear')
+
+	print("\n\n[+] Setting up the hash")
+	initial_hash = setting_hash_86x64(initial_hash, int(choice))
+	print(initial_hash)
 
 	print("\n\n[+] Initialisation of combinations list")
 	combi_partitioner(combi_list, int(string_length), int(per_time))
@@ -148,7 +184,7 @@ def main():
 	print("\n\n[+] Cracking the hash ...\n\n")
 	pbar = tqdm.tqdm(total = len(combi_list))
 
-	accept_connec_th = Thread(target=accept_connection, args=(main_connection, per_time, initial_hash, string_length), daemon=True)
+	accept_connec_th = Thread(target=accept_connection, args=(main_connection, choice, per_time, initial_hash, string_length), daemon=True)
 	accept_connec_th.start()
 
 	#Main Loop
@@ -167,7 +203,8 @@ def main():
 				
 				if(msg.decode() == "FOUND"):
 					readable_sock.send(b"ok")
-					print("Data found\n")
+					msg = readable_sock.recv(1024)#Receive password
+					print("\n\n\t[+]Password : " + msg.decode() + "\n")
 					sys.exit(0)
 				else:
 					if(len(combi_list) == 0):
