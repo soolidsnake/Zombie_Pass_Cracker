@@ -1,17 +1,10 @@
-#include <mhash.h>
-#include <string.h>
-
-
 #include "hashes.h"
 
-/* Function prototypes */
-
-void md5_hash(const uint8_t *message, size_t len, uint32_t hash[4]);
-void sha512_hash(const uint8_t *message, size_t len, uint64_t hash[8]);
 
 // Link this program with an external C or x86 compression function
 extern void md5_compress(uint32_t state[4], const uint8_t block[64]);
 extern void sha512_compress(uint64_t state[8], const uint8_t block[128]);
+
 
 /* entry point ==================================================================================================================================== */
 

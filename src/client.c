@@ -10,10 +10,17 @@
 #include <arpa/inet.h> 
 #include <time.h>
 #include <inttypes.h>// to get 8 bytes from strtoumax(...)
+
 #include "hashes.h"
 
 
+/* Prototypes ===================================================================================================== */
+
+
 int compare_hashes(uint64_t initial_hash[], uint64_t final_hash[], int limit);
+
+
+/* Entry point ==================================================================================================== */
 
 
 int main(int argc, char *argv[])
@@ -101,6 +108,17 @@ int main(int argc, char *argv[])
     time_t          s;  // Seconds
     struct timespec spec;
 
+    /* Put the hash functions into the array 'hash_functions'. We use this to point to the right
+       hash function inside the bruteforce loop.*/
+    void (*hash_function) (const uint8_t*, size_t, uint64_t*) = NULL;
+    switch(choice) {
+        case 0:
+            hash_function = sha512_hash;
+            break;
+        case 1:
+            hash_function = md5_hash;
+            break;
+    }
 
 
     while(1)
@@ -125,17 +143,7 @@ int main(int argc, char *argv[])
         {
             //printf("starting string : %s \n\n",string);
             //sleep(1);
-
-            switch(choice)//will be changed to a hardcoded jmp address
-            {
-                case 0:
-                    sha512_hash(string, string_length, final_hash);
-                    break;
-                case 1:
-                    md5_hash(string, string_length, final_hash);
-                    break;
-            }
-            
+            hash_function(string, string_length, final_hash);
 
             if(compare_hashes(initial_hash, final_hash, limit))
             {
