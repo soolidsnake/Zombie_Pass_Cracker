@@ -6,18 +6,14 @@ import time
 import tqdm
 from threading import Thread
 
+import combi_manager
 
-pbar = None
 
 clients_info=[]
-# combi_and_client : It is a dictionary that each key is a client, and each element is a combination. This dictionary
-# will contain all the clients that are already working on a combination. """
-combi_and_client = {}
 
-
-# Print list of all hashs algorithms
 
 def hash_alg_list():
+	"""Print list of all hashs algorithms."""
 
 	print('\n\
 			0 - SHA512\n\
@@ -47,25 +43,7 @@ def accept_connection(main_connection, choice, per_time, initial_hash, string_le
 			continue
 
 
-def combi_manager(combi_list, client): 
-	"""Gives the client the right combination."""
-	global combi_and_client
-	global pbar
-
-	# If the client already exist in the 'combi_and_client' dictionary (doc of the variable in the beginning of the
-	# script), we associate him to another combination. Then that combination is romeved from the list and returned.
-
-	pbar.update()
-
-	if client in combi_and_client:
-		del combi_and_client[client]
-
-	combi_and_client[client] = combi_list[0]
-	del combi_list[0]
-	return combi_and_client[client]
-
-
-def combi_partitioner(combi_list, string_length, per_time): 
+def combi_partitioner(string_length, per_time): 
 	"""Fills the list "combi_list" example : 
 	per_time = 2 , string_length = 3
 	combi_list = ["aaa", "aac", "aae", ...] """ 
@@ -76,7 +54,7 @@ def combi_partitioner(combi_list, string_length, per_time):
 
 	pbar = tqdm.tqdm(total = total_combin)
 
-	combi_list.append("".join([chr(c) for c in string]))
+	combi_manager.combi_list.append("".join([chr(c) for c in string]))
 
 	# This loop will stop when we see that we are trying to bypass 'z' on the last character of the string. 
 	while True:
@@ -106,7 +84,7 @@ def combi_partitioner(combi_list, string_length, per_time):
 		# that we finished generating all the combinations.
 		except IndexError:
 			break
-		combi_list.append("".join([chr(c) for c in string]))
+		combi_manager.combi_list.append("".join([chr(c) for c in string]))
 		pbar.update(per_time)
 
 	return 0
@@ -147,11 +125,9 @@ def setting_hash_86x64(initial_hash, choice):
 
 def main():
 	os.system('clear')
-	global pbar
 
 	Hash_type = ""
 	Hash = ""
-	combi_list = []
 
 	hash_alg_list()
 	choice = input("Choose hash algorithm : ")
@@ -167,8 +143,7 @@ def main():
 	print(initial_hash)
 
 	print("\n\n[+] Initialisation of combinations list")
-	combi_partitioner(combi_list, int(string_length), int(per_time))
-
+	combi_partitioner(int(string_length), int(per_time))
 
 
 	###############################################################
@@ -182,7 +157,7 @@ def main():
 	
 	os.system('clear')
 	print("\n\n[+] Cracking the hash ...\n\n")
-	pbar = tqdm.tqdm(total = len(combi_list))
+	combi_manager.init_pbar()
 
 	accept_connec_th = Thread(target=accept_connection, args=(main_connection, choice, per_time, initial_hash, string_length), daemon=True)
 	accept_connec_th.start()
@@ -196,8 +171,8 @@ def main():
 			for readable_sock in readable:
 				msg = readable_sock.recv(1024)
 
-				if not readable_sock in combi_and_client:
-					starting_str = combi_manager(combi_list, readable_sock)
+				if not readable_sock in combi_manager.combi_and_client:
+					starting_str = combi_manager.give_combination(readable_sock)
 					readable_sock.send(starting_str.encode())
 
 				
@@ -207,16 +182,19 @@ def main():
 					print("\n\n\t[+]Password : " + msg.decode() + "\n")
 					sys.exit(0)
 				else:
-					if(len(combi_list) == 0):
+					# This can cause a problem, because the clients are taking extra combination, and the list 
+					# might be empty although the clients are still processing some combinations. Which will make the
+					# server quit before all the combinations are really done.
+					if(len(combi_manager.combi_list) == 0):
 						raise IndexError
-					starting_str = combi_manager(combi_list, readable_sock)
+					starting_str = combi_manager.give_combination(readable_sock)
 					readable_sock.send(starting_str.encode())
-				readable.remove(readable_sock)
+				# readable.remove(readable_sock)
 		except socket.error:
 			#If an error happens remove the client from dictonnary and from clients_info
 
-			combi_list.append(combi_and_client[readable_sock])
-			del combi_and_client[readable_sock]
+			combi_manager.combi_list.append(combi_manager.combi_and_client[readable_sock])
+			del combi_manager.combi_and_client[readable_sock]
 
 			print("\n\t[*]A client has just disconnected\n")
 			clients_info.remove(readable_sock)
