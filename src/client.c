@@ -12,6 +12,7 @@
 #include <inttypes.h>// to get 8 bytes from strtoumax(...)
 
 #include "hashes.h"
+#include "constant.h"
 
 
 /* Prototypes ===================================================================================================== */
@@ -38,6 +39,7 @@ int main(int argc, char *argv[])
     int found = 0;
     int i = 0, j=0;
     struct sockaddr_in serv_addr = {0}; 
+    void (*hash_function) (const uint8_t*, size_t, uint64_t*) = NULL;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -97,8 +99,7 @@ int main(int argc, char *argv[])
     recvBuff[n] = 0;
     string_length = atoi(recvBuff);
     printf("\nstring_length : %d \n", string_length);
-    
-    send(sockfd, "READY", sizeof("READY"),0);
+    send(sockfd, &READY, sizeof(char),0);
     printf("I'M READY\n");
     
     /* Main loop */
@@ -110,7 +111,8 @@ int main(int argc, char *argv[])
 
     /* Put the hash functions into the array 'hash_functions'. We use this to point to the right
        hash function inside the bruteforce loop.*/
-    void (*hash_function) (const uint8_t*, size_t, uint64_t*) = NULL;
+    
+
     switch(choice) {
         case 0:
             hash_function = sha512_hash;
@@ -147,7 +149,7 @@ int main(int argc, char *argv[])
 
             if(compare_hashes(initial_hash, final_hash, limit))
             {
-                send(sockfd, "FOUND", sizeof("FOUND")-1,0);
+                send(sockfd, &FOUND, sizeof(char),0);
                 n = read(sockfd, recvBuff, sizeof(recvBuff)-1);
                 send(sockfd, string, string_length, 0);//Send password
                 found = 1;
@@ -171,7 +173,7 @@ int main(int argc, char *argv[])
         if(found != 0)
             break;
         
-        send(sockfd, "NOTFOUND", sizeof("NOTFOUND"),0);
+        send(sockfd, &NOT_FOUND, sizeof(char), 0);
         //printf("not found re-trying with new beginning\n");
         //sleep(1);
     }

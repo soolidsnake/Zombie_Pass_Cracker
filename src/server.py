@@ -9,6 +9,13 @@ from threading import Thread
 import combi_manager
 
 
+#CONSTANTS
+READY = '0'
+FOUND = '1'
+NOT_FOUND = '2'
+
+
+
 clients_info=[]
 
 
@@ -124,6 +131,11 @@ def setting_hash_86x64(initial_hash, choice):
 
 
 def main():
+
+	global READY, FOUND, NOT_FOUND
+
+
+
 	os.system('clear')
 
 	Hash_type = ""
@@ -169,14 +181,13 @@ def main():
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0.01)
 
 			for readable_sock in readable:
-				msg = readable_sock.recv(1024)
-
+				msg = readable_sock.recv(1)
 				if not readable_sock in combi_manager.combi_and_client:
 					starting_str = combi_manager.give_combination(readable_sock)
 					readable_sock.send(starting_str.encode())
 
 				
-				if(msg.decode() == "FOUND"):
+				if(msg.decode() == FOUND):
 					readable_sock.send(b"ok")
 					msg = readable_sock.recv(1024)#Receive password
 					print("\n\n\t[+]Password : " + msg.decode() + "\n")
