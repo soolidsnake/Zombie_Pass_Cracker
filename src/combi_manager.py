@@ -37,7 +37,7 @@ def give_combination(client):
     combi = combi_list.popleft()
     combi_and_client[client] += [combi]
     # print("Client list :", combi_and_client[client])
-    return combi
+    client.send(combi.encode())
 
 
 def finished_combination(client, combination):

@@ -184,8 +184,7 @@ def main():
 				# print("Combi list :", combi_manager.combi_list[0], combi_manager.combi_list[1])
 				msg = readable_sock.recv(1)
 				if not readable_sock in combi_manager.combi_and_client:
-					starting_str = combi_manager.give_combination(readable_sock)
-					readable_sock.send(starting_str.encode())
+					combi_manager.give_combination(readable_sock)
 
 				
 				if(msg.decode() == FOUND):
@@ -203,8 +202,7 @@ def main():
 						# retrieve the combination from the client, and delete it.
 						combi = readable_sock.recv(int(string_length))
 						combi_manager.finished_combination(readable_sock, combi.decode())
-					starting_str = combi_manager.give_combination(readable_sock)
-					readable_sock.send(starting_str.encode())
+					combi_manager.give_combination(readable_sock)
 				# readable.remove(readable_sock)
 		except socket.error:
 			# Handle the client disconnection
