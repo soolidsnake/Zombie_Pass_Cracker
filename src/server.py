@@ -181,6 +181,7 @@ def main():
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0.01)
 
 			for readable_sock in readable:
+				# print("Combi list :", combi_manager.combi_list[0], combi_manager.combi_list[1])
 				msg = readable_sock.recv(1)
 				if not readable_sock in combi_manager.combi_and_client:
 					starting_str = combi_manager.give_combination(readable_sock)
@@ -198,14 +199,16 @@ def main():
 					# server quit before all the combinations are really done.
 					if(len(combi_manager.combi_list) == 0):
 						raise IndexError
+					if(msg.decode() == NOT_FOUND):
+						# retrieve the combination from the client, and delete it.
+						combi = readable_sock.recv(int(string_length))
+						combi_manager.finished_combination(readable_sock, combi.decode())
 					starting_str = combi_manager.give_combination(readable_sock)
 					readable_sock.send(starting_str.encode())
 				# readable.remove(readable_sock)
 		except socket.error:
-			#If an error happens remove the client from dictonnary and from clients_info
-
-			combi_manager.combi_list.append(combi_manager.combi_and_client[readable_sock])
-			del combi_manager.combi_and_client[readable_sock]
+			# Handle the client disconnection
+			combi_manager.disconnected_client(readable_sock)
 
 			print("\n\t[*]A client has just disconnected\n")
 			clients_info.remove(readable_sock)

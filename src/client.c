@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 
     char recvBuff[1024] = {0};
     char string[64] = {0};
+    char combi_start[64] = {0};
     uint64_t initial_hash[128] = {0};
     uint64_t final_hash[128] = {0};
     int sockfd = 0;
@@ -131,9 +132,12 @@ int main(int argc, char *argv[])
         //ms = spec.tv_nsec; // Convert nanoseconds to milliseconds
 
         found = 0;
-        n = read(sockfd, string, string_length);
-        string[n] = 0;
-        
+        n = read(sockfd, combi_start, string_length);
+        combi_start[n] = 0;
+        strcpy(string, combi_start);
+        // printf("%s\n", combi_start);
+        // sleep(3);
+
         //clock_gettime(CLOCK_REALTIME, &spec);
 
         //printf("%f\n",(spec.tv_nsec - ms)/1.0e6);
@@ -174,6 +178,8 @@ int main(int argc, char *argv[])
             break;
         
         send(sockfd, &NOT_FOUND, sizeof(char), 0);
+        send(sockfd, combi_start, string_length, 0); //Send the failed combination
+        // printf("sending %s\n", combi_start);
         //printf("not found re-trying with new beginning\n");
         //sleep(1);
     }

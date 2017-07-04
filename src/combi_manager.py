@@ -11,8 +11,9 @@ Variables:
 """
 
 import tqdm
+from collections import deque
 
-combi_list = []
+combi_list = deque()
 combi_and_client = {}
 pbar = None
 
@@ -26,25 +27,27 @@ def give_combination(client):
     """This function return the right combination to give to the 'client', and keep track of which client is 
     having which combination (within the dictionary 'combi_and_client')."""
 
-    # If the client already exist in the 'combi_and_client' dictionary (doc of the variable in the beginning of the
-    # script), we associate him to another combination. Then that combination is romeved from the list and returned.
-
-    global pbar
-    global combi_and_client
-    global combi_list
+    global pbar, combi_and_client, combi_list
 
     pbar.update()
 
-    if client in combi_and_client:
-        del combi_and_client[client]
+    if client not in combi_and_client:
+        combi_and_client[client] = []
 
-    combi_and_client[client] = combi_list[0]
-    del combi_list[0]
-    # print(combi_list[:10])
-    return combi_and_client[client]
+    combi = combi_list.popleft()
+    combi_and_client[client] += [combi]
+    # print("Client list :", combi_and_client[client])
+    return combi
+
+
+def finished_combination(client, combination):
+    """This function is used when a client finish a combination."""
+    combi_and_client[client].remove(combination)
 
 
 def disconnected_client(client):
-    """This method return all the unfinished combinations of the disconnected client, into the list 
+    """This method reput all the unfinished combinations of the disconnected client, into the list 
     'combi_list' (to not loose combinations when a client disconnect). """
-    pass
+
+    combi_list.extendleft( combi_and_client[client] )
+    del combi_and_client[client]
