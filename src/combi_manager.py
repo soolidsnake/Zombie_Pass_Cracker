@@ -27,9 +27,8 @@ def give_combination(client):
     """This function return the right combination to give to the 'client', and keep track of which client is 
     having which combination (within the dictionary 'combi_and_client')."""
 
-    global pbar, combi_and_client, combi_list
+    global combi_and_client, combi_list
 
-    pbar.update()
 
     if client not in combi_and_client:
         combi_and_client[client] = []
@@ -42,6 +41,10 @@ def give_combination(client):
 
 def finished_combination(client, combination):
     """This function is used when a client finish a combination."""
+
+    global pbar
+
+    pbar.update()
     combi_and_client[client].remove(combination)
 
 
