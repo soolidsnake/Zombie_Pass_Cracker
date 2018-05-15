@@ -31,7 +31,6 @@ def hash_alg_list():
 #Accepts a client connection
 def accept_connection(main_connection, choice, per_time, initial_hash, string_length):
 	#A thread that accepts clients and send them parameters "per_time" && "initial_hash"
-
 	global clients_info
 	while True:
 		client, address = main_connection.accept()
@@ -174,8 +173,7 @@ def main():
 	accept_connec_th = Thread(target=accept_connection, args=(main_connection, choice, per_time, initial_hash, string_length), daemon=True)
 	accept_connec_th.start()
 
-	#Main Loop
-	
+	#Main Loop	
 	while(1):
 		try:
 			readable, writeable, exceptional = select.select(clients_info,[] ,[] ,0.01)
