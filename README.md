@@ -13,7 +13,7 @@ How to run
 1) Run the python server **server.py**.
 
 ![image0_server](images/images0.png)
-![image1_server](images/images1.png)
+![image1_server](images/image1.png)
 
 2) run **make.sh** to compile the client.
 
