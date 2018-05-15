@@ -7,7 +7,7 @@ supported hashes:
 * MD5
 * SHA512
 
-PS: The project is still not complete.
+We will add more supported hashes in the future as well as optimizing the code for better performance.
 
 Disclaimer 
 ------------
@@ -28,6 +28,11 @@ How to run
 ![image1_server](images/image1.png)
 
 2) run **make.sh** to compile the client.
+
+Authors
+-------
+BITAM Salim [github.com/soolidsnake](https://github.com/soolidsnake).
+MALAOUI Sidahmed bilal [github.com/sidahmed-malaoui](https://github.com/sidahmed-malaoui).
 
 License
 -------
