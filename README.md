@@ -11,7 +11,7 @@ We will add more supported hashes in the future as well as optimizing the code f
 
 Disclaimer 
 ------------
-The author of this project will not be held responsible in the event any criminal charges be brought against any individuals misusing the information in this website to break the law.
+Any actions and or activities related to the material contained within this Website is solely your responsibility.The misuse of the information in this website can result in criminal charges brought against the persons in question. The author of this website will not be held responsible in the event any criminal charges be brought against any individuals misusing the information in this website to break the law.
 
 Don't use it for a bad purpose the world is already full of evil.
 
